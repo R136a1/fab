@@ -1,14 +1,32 @@
-var name
-  , app
-  , fab
-    = module.exports
-    = require( "./builds/all" ).app;
+require.paths.unshift( __dirname );
+module.exports = fab;
 
-for ( name in fab ) {
-  app = fab[ name ];
+function fab( app ){ app( log, imports ) }
 
-  for ( name in app )
-    { fab[ name ] = fab[ name ] || app[ name ] };
+function log( data ) {
+  if ( data ) process.stdout.write( data );
+  return log;
 }
 
-fab.fab = fab;
+function imports( exports ) {
+  var libs = []
+    , names = 1 in arguments
+      ? libs.slice.call( arguments, 1 )
+      : exports.toString()
+        .split( /[^\w$]+/, exports.length + !!exports.name + 1 )
+        .slice( !!exports.name + 1 );
+        
+  ( function loop() {
+    var name = names.shift();
+
+    if ( !name ) exports.apply( undefined, libs );
+    
+    else {
+      console.log( name.replace( /\W/g, "/" ), name.replace( /\W/g, "/" ) )
+      require( './' + name.replace( /\W/g, "/" ) )( function( lib ) {
+        libs.push( lib );
+        loop();
+      }, imports );
+    }
+  })()
+}
